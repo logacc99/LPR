@@ -6,13 +6,13 @@ OUTPUT_DIR                      = './output/demo'
 UPLOAD_DIR                      = './dataset/upload'
 
 """ MODELS """
-PATH_TO_VEHICLE_DETECTOR        = './models/yolov5s.pt'
+PATH_TO_VEHICLE_DETECTOR        = '/content/drive/MyDrive/lpr-assets/models/yolov5s.pt'
 
-PATH_TO_LP_DETECTOR             = './models/lp-detector/train-9-1-2022/wpod-net_best.json'
+PATH_TO_LP_DETECTOR             = '/content/drive/MyDrive/lpr-assets/models/lp-detector/train-9-1-2022/wpod-net_best.json'
 
-PATH_TO_OCR_MODEL               = './models/ocr'
+PATH_TO_OCR_MODEL               = '/content/drive/MyDrive/lpr-assets/models/ocr'
 
-PATH_TO_TYPE_PREDICTOR          = './models/row_classify_model.h5'
+PATH_TO_TYPE_PREDICTOR          = '/content/drive/MyDrive/lpr-assets/models/row_classify_model.h5'
 
 """ THRESHOLDS """
 LP_THRESHOLD                    = 0.5
