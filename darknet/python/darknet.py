@@ -133,7 +133,7 @@ def array_to_image(arr):
     im = IMAGE(w,h,c,data)
     return im, arr
 
-def get_detection(net, meta, batch_img, thresh=.5, hier_thresh=.5, nms_value=.45, flag = None):
+def get_detection(net, meta, batch_img, thresh=.5, hier_thresh=.5, nms_value=.45):
     prediction = []
     for idx in range(batch_img.shape[0]):
         image = batch_img[idx]
@@ -158,11 +158,6 @@ def get_detection(net, meta, batch_img, thresh=.5, hier_thresh=.5, nms_value=.45
                                (b.x, b.y, b.w, b.h)))
 
         res = sorted(res, key=lambda x: -x[1])
-
-        # Force that lower line contains numbers only
-        if idx == 1 and flag == 'ocr':
-            res = [obj for obj in res if obj[0].decode().isnumeric()]
-        # END
         
         if isinstance(image, bytes): free_image(im)
         free_detections(dets, num)
@@ -174,17 +169,6 @@ def do_vehicle_detection(net, meta, img, vehicle_threshold = .5):
     return get_detection(net, meta, img, thresh = vehicle_threshold)
     
 def do_ocr(net, meta, img, ocr_threshold=.5, nms_value=.45):
-    return get_detection(net, meta, img, thresh = ocr_threshold, nms_value = nms_value, flag = 'ocr')
-    
-# if __name__ == "__main__":
-#     #net = load_net("cfg/densenet201.cfg", "/home/pjreddie/trained/densenet201.weights", 0)
-#     #im = load_image("data/wolf.jpg", 0, 0)
-#     #meta = load_meta("cfg/imagenet1k.data")
-#     #r = classify(net, meta, im)
-#     #print r[:10]
-#     net = load_net("cfg/tiny-yolo.cfg", "tiny-yolo.weights", 0)
-#     meta = load_meta("cfg/coco.data")
-#     r = detect(net, meta, "data/dog.jpg")
-#     print (r)
-    
+    return get_detection(net, meta, img, thresh = ocr_threshold, nms_value = nms_value)
+
 
