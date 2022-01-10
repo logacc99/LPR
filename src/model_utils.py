@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import time
 import base64
-from os.path import splitext
+import os
 
 from    src.label                   import Label
 from    src.utils                   import getWH, nms, crop_region, \
@@ -36,8 +36,6 @@ def save_model(model,path,verbose=0):
 
 def load_model(path,custom_objects={},verbose=0):
     from keras.models import model_from_json
-
-    path = splitext(path)[0]
     with open('%s.json' % path, 'r') as json_file:
         model_json = json_file.read()
     model = model_from_json(model_json, custom_objects={})
@@ -45,14 +43,15 @@ def load_model(path,custom_objects={},verbose=0):
     return model
 
 def load_yolov2(path_to_data):
-    vehicle_weights = f'{path_to_data}/yolo-voc.weights'.encode('utf-8')
-    vehicle_netcfg  = f'{path_to_data}/yolo-voc.cfg'.encode('utf-8')
-    vehicle_dataset = f'{path_to_data}/voc.data'.encode('utf-8')
+    model_name = os.path.basename(path_to_data)
+    weights = f'{path_to_data}/{model_name}.weights'.encode('utf-8')
+    netcfg  = f'{path_to_data}/{model_name}.cfg'.encode('utf-8')
+    data = f'{path_to_data}/{model_name}.data'.encode('utf-8')
     
-    vehicle_net  = dn.load_net(vehicle_netcfg, vehicle_weights, 0)
-    vehicle_meta = dn.load_meta(vehicle_dataset)
+    net  = dn.load_net(netcfg, weights, 0)
+    meta = dn.load_meta(data)
     
-    return vehicle_net, vehicle_meta
+    return net, meta
 
 def load_ocr_model(path_to_data):
     ocr_weights = f'{path_to_data}/ocr-net.weights'.encode('utf-8')

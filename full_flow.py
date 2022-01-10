@@ -32,7 +32,7 @@ class LP_Detector():
 
         print('Loading OCR Model...')
         self.ocr_net, self.ocr_meta = \
-            load_ocr_model(config.PATH_TO_OCR_MODEL)
+            load_yolov2(config.PATH_TO_OCR_MODEL)
 
         print('Loading Type Predictor...')
         self.type_predictor = tf.keras.models.load_model(config.PATH_TO_TYPE_PREDICTOR)
