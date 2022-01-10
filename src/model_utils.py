@@ -44,9 +44,9 @@ def load_model(path,custom_objects={},verbose=0):
 
 def load_yolov2(path_to_data):
     model_name = os.path.basename(path_to_data)
-    weights = f'{path_to_data}/{model_name}.weights'.encode('utf-8')
-    netcfg  = f'{path_to_data}/{model_name}.cfg'.encode('utf-8')
-    data = f'{path_to_data}/{model_name}.data'.encode('utf-8')
+    weights = f'{path_to_data}.weights'.encode('utf-8')
+    netcfg  = f'{path_to_data}.cfg'.encode('utf-8')
+    data = f'{path_to_data}.data'.encode('utf-8')
     
     net  = dn.load_net(netcfg, weights, 0)
     meta = dn.load_meta(data)
