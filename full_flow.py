@@ -75,6 +75,15 @@ class LP_Detector():
 
         return detected, Ilp, lp_coor, lp_type
 
+    def contrast_increase(self, img):
+        lab= cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(3,3))
+        cl = clahe.apply(l)
+        limg = cv2.merge((cl,a,b))
+        final = cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
+        return final
+
     def ocr(self, plate_img, plate_type):
         lp_str, ocr_time = get_ocr_result(
             self.ocr_net,
@@ -100,6 +109,7 @@ class LP_Detector():
 
             """ APPLY OCR """
             if detected:
+                lp_img = self.contrast_increase(lp_img)
                 lp_str = self.ocr(lp_img, lp_type)
                 ocr_results.append(lp_str + f'({lp_type})')
             else:
@@ -202,9 +212,11 @@ class LP_Detector():
 #     print("STEP 4: generating video...")
 #     generate_video(list_images)
 
+
 def detect_batch(image_paths, lp_detector,save_dir = None):
     for image_path in tqdm(image_paths):
         image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         fname = image_path.split('/')[-1].split('.')[0]
 
         # Read vehicle boxes

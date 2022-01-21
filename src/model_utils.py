@@ -140,7 +140,7 @@ def reconstruct(Iorig,I,Y,type_predictor,threshold=.5):
         labels.append(DLabel(0,pts_prop,prob))
 
 
-    final_labels, _ = nms(labels,.1)
+    final_labels, _ = nms(labels, 0.1)
     TLps = []
     lps_coor = []
     lps_type = []
@@ -154,11 +154,10 @@ def reconstruct(Iorig,I,Y,type_predictor,threshold=.5):
             plate_img = (Iorig[rect[1]:rect[3], rect[0]:rect[2], :]*255).astype(np.uint8)
             
             # Detect license plate is 1 row or 2 rows
-            # lp_type = detect_lp_type(plate_img, type_predictor)
-            lp_type = 1
-
-            out_size = (240, 170) if lp_type == 2 else (240, 80)
-            print(out_size)
+            lp_type = detect_lp_type(coor, threshold = 0.5)
+            # lp_type = 1
+            out_size = (160, 120) if lp_type == 2 else (240, 80)
+            
             t_ptsh 	= getRectPts(0,0,out_size[0],out_size[1])
             ptsh 	= np.concatenate((pts_normalized, np.ones((1,4))))
             H 		= find_T_matrix(ptsh,t_ptsh)
@@ -166,28 +165,40 @@ def reconstruct(Iorig,I,Y,type_predictor,threshold=.5):
             TLps.append(Ilp)
             lps_coor.append(coor)
             lps_type.append(lp_type)
-        
             # coor.append(ptsh)
+            break
 
     return TLps, lps_coor, lps_type
 
-def detect_lp_type(lp_img, type_predictor):
-    resized = cv2.resize(lp_img, (224,224), interpolation = cv2.INTER_AREA)
-    gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
-    img = tf.expand_dims(gray, 0)
+def detect_lp_type(list_points, threshold = 0.6):
+    p1, p2, p3, p4 = list_points
+    d1 = np.linalg.norm(np.array(p1)-np.array(p2))
+    d2 = np.linalg.norm(np.array(p2)-np.array(p3))
+    ratio = min(d1, d2) / max(d1, d2)
+    if ratio > threshold:
+        return 2
+    else:
+        return 1
 
-    predictions = type_predictor.predict(img)
-    score = tf.nn.softmax(predictions[0])
-    lpType_names = [1, 2]
-    return lpType_names[np.argmax(score)]
+
+# def detect_lp_type(lp_img, type_predictor):
+#     resized = cv2.resize(lp_img, (224,224), interpolation = cv2.INTER_AREA)
+#     gray = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+#     img = tf.expand_dims(gray, 0)
+
+#     predictions = type_predictor.predict(img)
+#     score = tf.nn.softmax(predictions[0])
+#     lpType_names = [1, 2]
+#     return lpType_names[np.argmax(score)]
 
 def preprocess_by_type(lp_img, lp_type):
     if lp_type == 1: 
         return lp_img.reshape(1,lp_img.shape[0],lp_img.shape[1], lp_img.shape[2])
     w, h = lp_img.shape[1], lp_img.shape[0]
     center = h//2
-    top_part = lp_img[:center, :, :]
-    bot_part = lp_img[center:, :, :]
+    margin = int(h*0.1)
+    top_part = lp_img[:center+margin, :, :]
+    bot_part = lp_img[center-margin:, :, :]
 
     # Return: stacked_img 
     return np.vstack((top_part[None,...], bot_part[None,...]))
@@ -226,7 +237,9 @@ def post_process(label_grouped, region = None):
         output = []
         fix_pairs = [
             {'letter':'O', 'digit':'0'}, 
-            {'letter':'I', 'digit':'1'}
+            {'letter':'I', 'digit':'1'},
+            {'letter':'S', 'digit':'5'},
+            {'letter':'B', 'digit':'8'}
             ]
         if len(label_grouped) == 7:
             for idx, group_chars in enumerate(label_grouped):
@@ -263,8 +276,8 @@ def get_ocr_result(ocr_net, ocr_meta, lp_img, lp_type, ocr_threshold=.5, nms_val
     start = time.time()
     raw_pred = dn.do_ocr(ocr_net, ocr_meta, stacked_img, ocr_threshold = ocr_threshold, nms_value=None)
     lp_str = ''
-    for R, (width, height) in raw_pred:
-        final_pred = ''
+    final_L = []
+    for i, (R, (width, height)) in enumerate(raw_pred):
         if len(R):
             L = dknet_label_conversion(R,width,height)
 
@@ -274,11 +287,12 @@ def get_ocr_result(ocr_net, ocr_meta, lp_img, lp_type, ocr_threshold=.5, nms_val
             #     br = l.br()
             #     h, w = lp_img.shape[:2]
             #     print(chr(l.cl()), l.prob())
-            #     cv2.rectangle(lp_img, (int(tl[0]*w), int(tl[1]*h)), (int(br[0]*w), int(br[1]*h)), (255,0,0), 2)
+            #     cv2.rectangle(stacked_img[i], (int(tl[0]*width), int(tl[1]*height)), 
+            #                 (int(br[0]*width), int(br[1]*height)), (255,0,0), 2)
             # from google.colab.patches import cv2_imshow
-            # cv2_imshow(lp_img)
+            # cv2_imshow(stacked_img[i])
             """ End - Debug """
-            L, L_grouped = nms(L,.45)
+            L, L_grouped = nms(L,.35)
             
             L.sort(key=lambda x: x.tl()[0])
             L_grouped.sort(key=lambda x: x[0].tl()[0])
@@ -287,10 +301,10 @@ def get_ocr_result(ocr_net, ocr_meta, lp_img, lp_type, ocr_threshold=.5, nms_val
             #     cls = [chr(lb.cl()) for lb in group]
             #     print(cls)
 
-            L_processed = post_process(L_grouped, region='brazil')
-            final_pred = ''.join([chr(l.cl()) for l in L_processed])
-            print(final_pred)
-
-        lp_str += f'{final_pred}'
+            final_L.extend(L_grouped)
+    
+    L_processed = post_process(final_L, region='brazil')
+    lp_str = ''.join([chr(l.cl()) for l in L_processed])
+    # print(lp_str)
     elapsed = time.time()-start
     return lp_str, elapsed
