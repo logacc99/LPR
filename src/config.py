@@ -27,7 +27,7 @@ VEHICLE_DETECTION               = True
 """ DEBUG """
 ACTIVATE_TIMER                  = True
 
-DEBUG                           = True
+DEBUG                           = False
 
 SAVE_PLOT                       = True
 

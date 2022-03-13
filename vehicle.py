@@ -84,7 +84,8 @@ class Vehicle_Detector():
                     # Filter by distance
                     box = annotator.box_info(xyxy)
                     boxes_d.append(box)
-                    if (((box[1] + box[3]) // 2) > im0.shape[0] * 0.05) and (self.names[c] in ['car', 'motorcycle', 'bus', 'truck']):
+                    box_center = (box[1] + box[3]) // 2
+                    if (im0.shape[0] * 0.6 > box_center > im0.shape[0] * 0.4) and (self.names[c] in ['car', 'motorcycle', 'bus', 'truck']):
                         filter_boxes.append(box)
                         label_vehicle.append(self.names[c])
         return filter_boxes, label_vehicle

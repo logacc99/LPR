@@ -303,7 +303,7 @@ def get_ocr_result(ocr_net, ocr_meta, lp_img, lp_type, ocr_threshold=.5, nms_val
 
             final_L.extend(L_grouped)
     
-    L_processed = post_process(final_L, region='brazil')
+    L_processed = post_process(final_L, region=None)
     lp_str = ''.join([chr(l.cl()) for l in L_processed])
     # print(lp_str)
     elapsed = time.time()-start

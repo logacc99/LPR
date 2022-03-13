@@ -4,7 +4,7 @@ from    vehicle    import Vehicle_Detector
 from    src.model_utils         import load_model, get_lp_detection, load_yolov2, \
                                 load_ocr_model, get_ocr_result
 import  src.config  as config
-from    src.utils  import poly_to_bbox, get_reference_box, multiplot
+from    src.utils  import poly_to_bbox, get_reference_box, multiplot, generate_video
 import  cv2
 import  tensorflow  as tf
 import  numpy       as np
@@ -19,7 +19,7 @@ print(tf.test.is_gpu_available(
 
 
 class LP_Detector():
-    def __init__(self, debug=True):
+    def __init__(self):
         """ Model """
         print('Loading WPOD-NET...')
         self.wpod_net = \
@@ -147,9 +147,15 @@ class LP_Detector():
                         thickness=tf, lineType=cv2.LINE_AA)
 
         """ DRAW COUNTING LINE """
-        # start_point = (0, round(image.shape[0] * 0.6))
-        # end_point = (image.shape[1], round(image.shape[0] * 0.6))
-        # cv2.line(image, start_point, end_point, (0, 0, 248), 9)
+        # Upper line
+        start_point = (0, round(image.shape[0] * 0.4))
+        end_point = (image.shape[1], round(image.shape[0] * 0.4))
+        cv2.line(image, start_point, end_point, (0, 0, 248), 9)
+
+        # Lower line
+        start_point = (0, round(image.shape[0] * 0.6))
+        end_point = (image.shape[1], round(image.shape[0] * 0.6))
+        cv2.line(image, start_point, end_point, (0, 0, 248), 9)
         return image
 
     def full_processing(self, org_img, detect_vehicle = True, filename = None):
@@ -192,25 +198,27 @@ class LP_Detector():
 
         return image_draw, vehicle_boxes, plate_ocr_results 
 
-# def demo_video(video_file):
-#     detector = LP_Detector()
-#     cap = cv2.VideoCapture(video_file)
-#     length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-#     ret, frame = cap.read()
-#     skip_frame = 4
-#     index_frame = 0
-#     list_images = []
-#     while ret:
-#         ret, frame = cap.read()
-#         if index_frame % skip_frame != 0:
-#             index_frame += 1
-#             continue
-#         list_images.append(detector.full_processing(frame, detector_vehicle)[0])
-#         index_frame += 1
+def demo_video(video_file, detector):
+    cap = cv2.VideoCapture(video_file)
+    length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    ret, frame = cap.read()
+    skip_frame = 5
+    index_frame = 0
+    list_images = []
+    while ret:
+        ret, frame = cap.read()
+        if index_frame % skip_frame != 0:
+            index_frame += 1
+            continue
+        list_images.append(detector.full_processing(frame)[0])
+        print(index_frame)
+        if len(list_images) == 100: 
+            break
+        index_frame += 1
 
-#     # STEP 4
-#     print("STEP 4: generating video...")
-#     generate_video(list_images)
+    # STEP 4
+    print("STEP 4: generating video...")
+    generate_video(list_images)
 
 
 def detect_batch(image_paths, lp_detector,save_dir = None):
